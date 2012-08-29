@@ -28,20 +28,18 @@ $(document).ready(function(){
     // holds variables that relate to the environment
     var World = {
         // an array of cells of the form {x: number, y: number}
-        cells : []
+        cells : [],
+        grid : undefined
     }
 
     // start setting it up
     setupFrame();
     drawBackground(BG_COLOR, BG_STROKE);
 
+    // All the Important(tm) stuff is here.
     var gameLoop = setInterval(function() {
         drawBackground(BG_COLOR, BG_STROKE);
-
-        // draw cells
-        for(var i = 0; i < World.cells.length; i++){
-            drawCell(World.cells[i]);
-        }
+        placeCells(World.cells);
     }, 1000 / FPS);
 
     // ========================================
@@ -71,8 +69,14 @@ $(document).ready(function(){
             x: cell.x - (size / 2),
             y: cell.y - (size / 2)
         }
-
         Canvas.drawRect(color, scolor, pos, size, size);
+    }
+
+    function placeCells(cells) {
+        // draw cells
+        for(var i = 0; i < World.cells.length; i++){
+            drawCell(World.cells[i]);
+        }
     }
 
     function addCell(cell) {
@@ -82,18 +86,22 @@ $(document).ready(function(){
     // lets make it so whenever i click it draws a square with the click as the center
 
     // this block of code keeps track of the mouse.
+    // only addCell when mouseup, otherwise, update the hoverCell
     $(document).mousedown(function(e){
         updateMouse(e.pageX, e.pageY);
         isMouseDown = true;
+
+        if(!World.grid) { // if grid is not defined
+            World.grid = {origin : {x: e.pageX, y: e.pageY}};
+        }
     }).mouseup(function(e) {
         updateMouse(e.pageX, e.pageY);
-        addCell({x: e.pageX, y: e.pageY});
         isMouseDown = false;
     }).mousemove(function(e){
         if(isMouseDown) {
             // all this crazy stuff cuz apparently
             // you can move the mouse into negative coordinates,
-            //while the mouse is stuck on the edge
+            // while the mouse is stuck on the edge
             var x = e.pageX;
             var y = e.pageY;
             if(x < 0) x = 0;
@@ -101,7 +109,6 @@ $(document).ready(function(){
             if(x > w) x = w;
             if(y > h) y = h;
             updateMouse(x, y);
-            addCell({x: x, y: y});
         }
     });
 
