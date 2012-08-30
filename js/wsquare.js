@@ -29,7 +29,10 @@ $(document).ready(function(){
     var World = {
         // an array of cells of the form {x: number, y: number}
         cells : [],
-        grid : undefined
+        grid : {
+            origin : {x: -1, y: -1}, // -1 signals uninitialized
+            cellsize : -1
+        },
     }
 
     // start setting it up
@@ -80,7 +83,43 @@ $(document).ready(function(){
     }
 
     function addCell(cell) {
+        // maybe we should check for duplicate cells here?
         World.cells.push(cell);
+    }
+
+    /**
+    * Get the cell that the point (x, y) is in
+    * in relation to the grid specified by 'grid'.
+    * The point (x, y) is on the pixel grid.
+    *
+    * All the size/2 stuff is incidental complexity
+    * from drawing the square around the mouse (see drawCell()).
+    *
+    * You can generate the whole grid with.
+    * pixel coordinates = size * (x on grid) + origin
+    * for-loop with (x on grid) as your increment to get
+    * cells in a row.
+    *
+    * I don't understand much of the math here.
+    * I guessed it all.
+    * It was all trial and error.
+    * It's two in the morning.
+    * It works.
+    */
+    function getContainingCell(x, y, grid){
+        var origin = {
+            x: grid.origin.x,
+            y: grid.origin.y
+        };
+        var size = grid.cellsize;
+
+        var ix = Math.floor((x - origin.x - size/2) / size);
+        var iy = Math.floor((y - origin.y - size/2) / size);
+
+        return {
+            x: origin.x + size * ix + size,
+            y: origin.y + size * iy + size
+        };
     }
 
     // lets make it so whenever i click it draws a square with the click as the center
@@ -91,8 +130,14 @@ $(document).ready(function(){
         updateMouse(e.pageX, e.pageY);
         isMouseDown = true;
 
-        if(!World.grid) { // if grid is not defined
-            World.grid = {origin : {x: e.pageX, y: e.pageY}};
+        if(World.grid.origin.x == -1) { // if grid is not init'ed
+            World.grid.origin = {x: e.pageX, y: e.pageY};
+            World.grid.cellsize = WorldConfig.CELL_SIZE;
+
+            addCell(World.grid.origin);
+        }
+        else {
+            addCell(getContainingCell(e.pageX, e.pageY, World.grid));
         }
     }).mouseup(function(e) {
         updateMouse(e.pageX, e.pageY);
@@ -109,6 +154,9 @@ $(document).ready(function(){
             if(x > w) x = w;
             if(y > h) y = h;
             updateMouse(x, y);
+
+            // this will lead to many duplicate cells.
+            addCell(getContainingCell(x, y, World.grid));
         }
     });
 
