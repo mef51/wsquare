@@ -16,8 +16,8 @@ $(document).ready(function(){
     var WorldConfig = {
         CELL_SIZE : 50,
         CELL_COLOR : "brown",
-        CELL_STROKE : "white"
-    }
+        CELL_STROKE : "white",
+    };
 
     // variables.
     var w = Canvas.width;
@@ -27,13 +27,15 @@ $(document).ready(function(){
 
     // holds variables that relate to the environment
     var World = {
-        // an array of cells of the form {x: number, y: number}
+        // an array of cells of the form Cell below
         cells : [],
         grid : {
             origin : {x: -1, y: -1}, // -1 signals uninitialized
             cellsize : -1
         },
-    }
+    };
+
+
 
     // start setting it up
     setupFrame();
@@ -46,8 +48,37 @@ $(document).ready(function(){
     }, 1000 / FPS);
 
     // ========================================
-    // Helpers
+    // Character Helpers
     // ========================================
+
+
+
+    // ========================================
+    // Grid Helpers
+    // ========================================
+
+    // describe a Cell
+    var Cell = function(x, y){
+        return {
+            x: x,
+            y: y,
+
+            draw: function() {
+                var color = WorldConfig.CELL_COLOR;
+                var scolor = WorldConfig.CELL_STROKE;
+                var size = WorldConfig.CELL_SIZE;
+                var pos = {
+                    x: this.x - (size / 2),
+                    y: this.y - (size / 2)
+                }
+                Canvas.drawRect(color, scolor, pos, size, size);
+            },
+
+            equals: function(cell) {
+                return this.x == cell.x && this.y == cell.y;
+            }
+        }
+    }
 
     function setupFrame(){
         Canvas.setCanvasSize(window.innerWidth, window.innerHeight);
@@ -64,27 +95,27 @@ $(document).ready(function(){
         mouse.y = y;
     }
 
-    function drawCell(cell) {
-        var color = WorldConfig.CELL_COLOR;
-        var scolor = WorldConfig.CELL_STROKE;
-        var size = WorldConfig.CELL_SIZE;
-        var pos = {
-            x: cell.x - (size / 2),
-            y: cell.y - (size / 2)
-        }
-        Canvas.drawRect(color, scolor, pos, size, size);
-    }
-
+    /**
+    * Expects an array 'cells' of the form 'Cell'
+    */
     function placeCells(cells) {
         // draw cells
         for(var i = 0; i < World.cells.length; i++){
-            drawCell(World.cells[i]);
+            World.cells[i].draw();
+            // drawCell(World.cells[i]);
         }
     }
 
     function addCell(cell) {
-        // maybe we should check for duplicate cells here?
-        World.cells.push(cell);
+        var c = new Cell(cell.x, cell.y);
+
+        // only add a cell if it isnt already in the array.
+        var isDuplicate = false;
+        for(var i = 0; i < World.cells.length && !isDuplicate; i++){
+            if(c.equals(World.cells[i])) isDuplicate = true;
+        }
+
+        if(!isDuplicate) World.cells.push(c);
     }
 
     /**
