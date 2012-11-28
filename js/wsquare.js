@@ -5,25 +5,20 @@
 */
 $(document).ready(function(){
 
-    var Canvas = getCanvas("wsquare");
-
     // constants.
     var FPS = 30;
     var BG_COLOR = "#efefef";
     var BG_STROKE = "#0f0f0f";
-
-    // holds constants that relate to the environment
-    var WorldConfig = {
-        CELL_SIZE : 50,
-        CELL_COLOR : "brown",
-        CELL_STROKE : "white",
-    };
 
     // variables.
     var w = Canvas.width;
     var h = Canvas.height;
     var mouse = {x: 0, y: 0}; // represent the mouse with a point on the canvas.
     var isMouseDown = false;
+
+    // start setting it up
+    setupFrame();
+    drawBackground(BG_COLOR, BG_STROKE);
 
     // holds variables that relate to the environment
     var World = {
@@ -35,52 +30,43 @@ $(document).ready(function(){
         },
     };
 
-
-
-    // start setting it up
-    setupFrame();
-    drawBackground(BG_COLOR, BG_STROKE);
+    // initially place character
+    var character = new Cell(0, 0, CharacterConfig.COLOR, CharacterConfig.STROKE_COLOR, CharacterConfig.SIZE);
+    initializeCharacter(character);
+    
 
     // All the Important(tm) stuff is here.
     var gameLoop = setInterval(function() {
         drawBackground(BG_COLOR, BG_STROKE);
         placeCells(World.cells);
+        updateCharacter(character);
     }, 1000 / FPS);
 
     // ========================================
-    // Character Helpers
+    // Character Stuff
     // ========================================
 
+    function updateCharacter(character) {
+        character.dx += WorldConfig.GRAVITY;
+        character.y += character.dx;
 
-
-    // ========================================
-    // Grid Helpers
-    // ========================================
-
-    // describe a Cell
-    var Cell = function(x, y){
-        return {
-            x: x,
-            y: y,
-
-            draw: function() {
-                var color = WorldConfig.CELL_COLOR;
-                var scolor = WorldConfig.CELL_STROKE;
-                var size = WorldConfig.CELL_SIZE;
-                var pos = {
-                    x: this.x - (size / 2),
-                    y: this.y - (size / 2)
-                }
-                Canvas.drawRect(color, scolor, pos, size, size);
-            },
-
-            equals: function(cell) {
-                return this.x == cell.x && this.y == cell.y;
-            }
-        }
+        if(isOnScreen(character.x, character.y))
+            character.draw();
+        else
+            initializeCharacter(character);
     }
 
-    function setupFrame(){
+    function initializeCharacter(character) {
+        character.x = w / CharacterConfig.INITIAL_X_PROPORTION;
+        character.y = h / CharacterConfig.INITIAL_Y_PROPORTION;
+        character.dx = 0;
+    }
+
+    // ========================================
+    // Helpers
+    // ========================================
+
+    function setupFrame() {
         Canvas.setCanvasSize(window.innerWidth, window.innerHeight);
         w = Canvas.width;
         h = Canvas.height;
@@ -90,6 +76,7 @@ $(document).ready(function(){
         Canvas.drawBackground(bg, stroke);
     }
 
+    
     function updateMouse(x, y) {
         mouse.x = x;
         mouse.y = y;
@@ -102,12 +89,11 @@ $(document).ready(function(){
         // draw cells
         for(var i = 0; i < World.cells.length; i++){
             World.cells[i].draw();
-            // drawCell(World.cells[i]);
         }
     }
 
     function addCell(cell) {
-        var c = new Cell(cell.x, cell.y);
+        var c = new Cell(cell.x, cell.y, WorldConfig.CELL_COLOR, WorldConfig.CELL_STROKE, WorldConfig.CELL_SIZE);
 
         // only add a cell if it isnt already in the array.
         var isDuplicate = false;
@@ -152,6 +138,14 @@ $(document).ready(function(){
             y: origin.y + size * iy + size
         };
     }
+
+    function isOnScreen(x, y) {
+        return x >= 0 && y >= 0 && x <= w && y <= h;
+    }
+
+    // ========================================
+    // Handlers
+    // ========================================
 
     // lets make it so whenever i click it draws a square with the click as the center
 
