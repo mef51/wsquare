@@ -47,8 +47,21 @@ $(document).ready(function(){
     // ========================================
 
     function updateCharacter(character) {
-        character.dx += WorldConfig.GRAVITY;
-        character.y += character.dx;
+        collision = getCollision(character);
+        if(collision){
+            log("boom!");
+            if(collision.isBottomCollision){
+                character.dy = 0;
+                character.y = collision.cell.y - CharacterConfig.SIZE;
+            }
+            else{
+                character.dy = 0;
+                character.y = collision.cell.y + WorldConfig.CELL_SIZE;
+            }
+        }
+        else{
+            fall(character);
+        }
 
         if(isOnScreen(character.x, character.y))
             character.draw();
@@ -58,8 +71,64 @@ $(document).ready(function(){
 
     function initializeCharacter(character) {
         character.x = w / CharacterConfig.INITIAL_X_PROPORTION;
-        character.y = h / CharacterConfig.INITIAL_Y_PROPORTION;
+        // character.y = h / CharacterConfig.INITIAL_Y_PROPORTION;
+        character.y = 0;
         character.dx = 0;
+        character.dy = 0;
+    }
+
+    function fall(character) {
+        character.dy += WorldConfig.GRAVITY / 2;
+        character.y += character.dy;
+        character.dy += WorldConfig.GRAVITY / 2;
+    }
+
+    function getCollision(character) {
+        // check every corner of the box character.
+        var topLeftCorner = {
+            x : character.x,
+            y : character.y
+        };
+
+        var topRightCorner = {
+            x : character.x + CharacterConfig.SIZE,
+            y : character.y
+        };
+
+        var botLeftCorner = {
+            x : character.x,
+            y : character.y + CharacterConfig.SIZE
+        };
+
+        var botRightCorner = {
+            x : character.x + CharacterConfig.SIZE,
+            y : character.y + CharacterConfig.SIZE
+        };
+
+        for(var i = 0; i < World.cells.length; i++){
+            var cellRect = {
+                x : World.cells[i].x,
+                y : World.cells[i].y
+            }
+            var size = World.cells[i].size;
+
+            // character fell and hit the ground
+            if(isInRect(botLeftCorner, cellRect, size, size) || isInRect(botRightCorner, cellRect, size, size)){
+                return {
+                    cell : World.cells[i],
+                    isBottomCollision : true
+                }
+            }
+
+            // character jumped and hit its head
+            if(isInRect(botLeftCorner, cellRect, size, size) || isInRect(botRightCorner, cellRect, size, size)){
+                return {
+                    cell : World.cells[i],
+                    isBottomCollision : false
+                }
+            }
+        }
+        return null;
     }
 
     // ========================================
@@ -143,6 +212,15 @@ $(document).ready(function(){
         return x >= 0 && y >= 0 && x <= w && y <= h;
     }
 
+    /**
+    * Generalization of isOnScreen
+    * Check if Point is in the rectangle
+    * at RectPoint of width w and height h
+    */
+    function isInRect(Point, RectPoint, w, h) {
+        return Point.x >= RectPoint.x && Point.y >= RectPoint.y && Point.x <= RectPoint.x + w && Point.y <= RectPoint.y + h;
+    }
+
     // ========================================
     // Handlers
     // ========================================
@@ -182,6 +260,26 @@ $(document).ready(function(){
 
             // this will lead to many duplicate cells.
             addCell(getContainingCell(x, y, World.grid));
+        }
+    }).keydown(function(e){
+        // left
+        if(e.keyCode == 37){
+            log("left!");
+        }
+
+        // up
+        if(e.keyCode == 38){
+            log("up!");
+        }
+
+        // right
+        if(e.keyCode == 39){
+            log("right!");
+        }
+
+        // down
+        if(e.keyCode == 40){
+            log("down!");
         }
     });
 

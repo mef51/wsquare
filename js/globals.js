@@ -6,7 +6,7 @@ var WorldConfig = {
     CELL_SIZE : 50,
     CELL_COLOR : "brown",
     CELL_STROKE : "white",
-    GRAVITY : 3
+    GRAVITY : 1
 };
 
 var CharacterConfig = {
